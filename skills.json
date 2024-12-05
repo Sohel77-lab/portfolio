@@ -1,0 +1,53 @@
+[
+    
+
+    {
+        "name": "HTML5",
+        "icon": "https://img.icons8.com/color/html"
+    },
+    
+  
+    {
+        "name": "CSS3",
+        "icon": "https://img.icons8.com/color/css"
+    },
+  {
+        "name": "Javascript",
+        "icon": "https://img.icons8.com/color/48/000000/javascript.png"
+    },
+  {
+        "name": "Wordpress",
+        "icon": "https://img.icons8.com/color/wordpress"
+    },
+  
+  {
+        "name": "SEO",
+        "icon": "   "
+    },
+
+    {
+        "name": "SMO",
+        "icon": ""
+    },
+
+    {
+        "name": "Photoshop",
+        "icon": ""
+    },
+
+    {
+        "name": "Coreldraw",
+        "icon": "https://img.icons8.com/color/48/000000/coreldraw.png"
+    },
+
+    {
+        "name": "Illustrator",
+        "icon": ""
+    },
+
+    {
+        "name": "Indesign ",
+        "icon": ""
+    }
+]
+
