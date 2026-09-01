@@ -136,77 +136,133 @@ srtop.reveal('.contact .container .form-group', { delay: 400 });
     const photoArea = document.querySelector('.home .image');
     if (!photoArea) return;
 
+    photoArea.style.position = 'relative';
+    photoArea.style.isolation = 'isolate';
+
     const canvas = document.createElement('canvas');
     canvas.className = 'cursor-orb-canvas';
+    canvas.style.position = 'absolute';
+    canvas.style.left = '0';
+    canvas.style.top = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.zIndex = '1';
+    canvas.style.pointerEvents = 'none';
     photoArea.insertBefore(canvas, photoArea.firstChild);
 
+    const photo = photoArea.querySelector('img');
+    if (photo) {
+        photo.style.position = 'relative';
+        photo.style.zIndex = '2';
+    }
+
     const ctx = canvas.getContext('2d');
-    let mouseX = -100, mouseY = -100;
-    let currentX = -100, currentY = -100;
+    let mouseX = -500, mouseY = -500;
+    let currentX = 0, currentY = 0;
     let particles = [];
+    let time = 0;
 
     function resize() {
         const rect = photoArea.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
-        canvas.style.width = rect.width + 'px';
-        canvas.style.height = rect.height + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (currentX === 0 && currentY === 0) {
+            currentX = rect.width * 0.62;
+            currentY = rect.height * 0.5;
+        }
     }
 
     function move(e) {
         const rect = photoArea.getBoundingClientRect();
         mouseX = e.clientX - rect.left;
         mouseY = e.clientY - rect.top;
-        if (mouseX >= 0 && mouseX <= rect.width && mouseY >= 0 && mouseY <= rect.height) {
-            photoArea.classList.add('cursor-orb-active');
-        }
     }
 
     photoArea.addEventListener('mousemove', move);
     photoArea.addEventListener('mouseenter', move);
     photoArea.addEventListener('mouseleave', function () {
-        mouseX = -100;
-        mouseY = -100;
-        photoArea.classList.remove('cursor-orb-active');
+        mouseX = -500;
+        mouseY = -500;
     });
     window.addEventListener('resize', resize);
     resize();
 
+    function drawGlow(x, y, radius) {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        g.addColorStop(0, 'rgba(37, 6, 173, 0.70)');
+        g.addColorStop(0.22, 'rgba(73, 28, 220, 0.45)');
+        g.addColorStop(0.50, 'rgba(245, 128, 19, 0.22)');
+        g.addColorStop(0.78, 'rgba(37, 6, 173, 0.08)');
+        g.addColorStop(1, 'rgba(37, 6, 173, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
     function animate() {
-        currentX += (mouseX - currentX) * 0.14;
-        currentY += (mouseY - currentY) * 0.14;
+        time += 0.018;
         const rect = photoArea.getBoundingClientRect();
         ctx.clearRect(0, 0, rect.width, rect.height);
 
-        if (mouseX > -50) {
-            const g = ctx.createRadialGradient(currentX, currentY, 0, currentX, currentY, 150);
-            g.addColorStop(0, 'rgba(37,6,173,0.55)');
-            g.addColorStop(0.35, 'rgba(37,6,173,0.25)');
-            g.addColorStop(0.7, 'rgba(245,128,19,0.10)');
-            g.addColorStop(1, 'rgba(37,6,173,0)');
-            ctx.fillStyle = g;
-            ctx.beginPath();
-            ctx.arc(currentX, currentY, 150, 0, Math.PI * 2);
-            ctx.fill();
+        const baseX = rect.width * 0.62 + Math.cos(time) * 18;
+        const baseY = rect.height * 0.50 + Math.sin(time * 1.3) * 18;
 
-            if (Math.random() > 0.55) particles.push({ x: currentX, y: currentY, life: 1, size: 1.5 + Math.random() * 3 });
+        currentX += ((mouseX > -100 ? mouseX : baseX) - currentX) * 0.09;
+        currentY += ((mouseY > -100 ? mouseY : baseY) - currentY) * 0.09;
+
+        // Always-visible animated aura behind the photo.
+        drawGlow(baseX, baseY, 185);
+        drawGlow(currentX, currentY, 125);
+
+        // Animated orbit rings.
+        ctx.save();
+        ctx.translate(baseX, baseY);
+        ctx.rotate(time * 0.7);
+        ctx.strokeStyle = 'rgba(37, 6, 173, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 150, 55, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.rotate(Math.PI / 2);
+        ctx.strokeStyle = 'rgba(245, 128, 19, 0.28)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 135, 45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Small glowing particles following the cursor.
+        if (mouseX > -100 && Math.random() > 0.45) {
+            particles.push({
+                x: currentX,
+                y: currentY,
+                life: 1,
+                size: 2 + Math.random() * 3,
+                drift: (Math.random() - 0.5) * 1.5
+            });
         }
 
         particles.forEach((p, i) => {
-            p.life -= 0.025;
-            p.y -= 0.4;
-            p.x += (Math.random() - 0.5) * 0.8;
-            if (p.life <= 0) particles.splice(i, 1);
-            else {
-                ctx.beginPath();
-                ctx.fillStyle = `rgba(37,6,173,${p.life * 0.55})`;
-                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-                ctx.fill();
+            p.life -= 0.018;
+            p.y -= 0.35;
+            p.x += p.drift;
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+                return;
             }
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(37, 6, 173, ${p.life * 0.85})`;
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = 'rgba(37, 6, 173, 0.8)';
+            ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
         });
+
         requestAnimationFrame(animate);
     }
+
     animate();
 })();
