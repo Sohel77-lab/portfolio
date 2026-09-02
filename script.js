@@ -266,3 +266,95 @@ srtop.reveal('.contact .container .form-group', { delay: 400 });
 
     animate();
 })();
+
+/* ===== STARTUP LETTER ANIMATION ===== */
+(function () {
+    function initStartupAnimation() {
+        const loader = document.getElementById('loader');
+        const text = loader ? loader.querySelector('.loading-text') : null;
+        if (!loader || !text) return;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            #loader {
+                opacity: 1;
+                visibility: visible;
+                transition: opacity .8s ease, visibility .8s ease;
+            }
+            #loader.startup-complete {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+            }
+            #loader .loading-text {
+                width: auto;
+                border-right: 0;
+                overflow: visible;
+                white-space: normal;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0;
+                font-size: clamp(2rem, 5vw, 4.8rem);
+                letter-spacing: .08em;
+                text-align: center;
+            }
+            #loader .loading-letter {
+                display: inline-block;
+                opacity: 0;
+                transform: translateY(45px) rotateX(-90deg) scale(.5);
+                filter: blur(8px);
+                animation: sohelLetterIn .75s cubic-bezier(.22,1,.36,1) forwards;
+            }
+            #loader .loading-space {
+                width: .35em;
+            }
+            #loader .loading-letter.highlight {
+                color: #f58013;
+                text-shadow: 0 0 18px rgba(245,128,19,.45);
+            }
+            @keyframes sohelLetterIn {
+                0% { opacity: 0; transform: translateY(45px) rotateX(-90deg) scale(.5); filter: blur(8px); }
+                65% { opacity: 1; transform: translateY(-7px) rotateX(8deg) scale(1.05); filter: blur(0); }
+                100% { opacity: 1; transform: translateY(0) rotateX(0) scale(1); filter: blur(0); }
+            }
+            @media (max-width: 600px) {
+                #loader .loading-text { padding: 0 2rem; line-height: 1.25; letter-spacing: .04em; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        const message = "WELCOME TO SOHEL'S PORTFOLIO";
+        text.textContent = '';
+
+        [...message].forEach((char, index) => {
+            if (char === ' ') {
+                const space = document.createElement('span');
+                space.className = 'loading-space';
+                text.appendChild(space);
+                return;
+            }
+
+            const letter = document.createElement('span');
+            letter.className = 'loading-letter';
+            if (index >= message.indexOf('SOHEL') && index < message.indexOf('SOHEL') + 5) {
+                letter.classList.add('highlight');
+            }
+            letter.textContent = char;
+            letter.style.animationDelay = `${index * 0.055}s`;
+            text.appendChild(letter);
+        });
+
+        const totalTime = message.length * 55 + 850;
+        setTimeout(() => {
+            loader.classList.add('startup-complete');
+            setTimeout(() => loader.remove(), 900);
+        }, totalTime);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initStartupAnimation);
+    } else {
+        initStartupAnimation();
+    }
+})();
